@@ -32,9 +32,11 @@ class AppointmentModel extends BaseModel
     public function hasConflict(int $doctorId, string $date, string $time): bool
     {
         $result = $this->execute(
-            'SELECT id FROM appointments WHERE doctor_id = ? AND appt_date = ? AND appt_time = ? LIMIT 1',
-            'iss',
-            [$doctorId, $date, $time]
+            'SELECT id FROM appointments
+             WHERE doctor_id = ? AND appt_date = ? AND appt_time = ? AND status <> ?
+             LIMIT 1',
+            'isss',
+            [$doctorId, $date, $time, 'cancelled']
         );
 
         return $result && $result->num_rows > 0;
@@ -70,17 +72,83 @@ class AppointmentModel extends BaseModel
 
     public function countByPatient(int $patientId, array $filters = []): int
     {
-        $conditions = ['a.patient_id = ?'];
-        $params = [$patientId];
+        return $this->countFiltered('patient', $patientId, $filters);
+    }
+
+    public function getByDoctor(int $doctorId, int $page, array $filters = []): array
+    {
+        $offset = (max(1, $page) - 1) * ITEMS_PER_PAGE;
+        $conditions = ['a.doctor_id = ?'];
+        $params = [$doctorId];
         $types = 'i';
 
         $this->applyCommonFilters($conditions, $params, $types, $filters);
 
-        $sql = 'SELECT COUNT(*) AS total FROM appointments a WHERE ' . implode(' AND ', $conditions);
+        $params[] = ITEMS_PER_PAGE;
+        $params[] = $offset;
+        $types .= 'ii';
+
+        $sql = $this->selectJoin . ' WHERE ' . implode(' AND ', $conditions)
+            . ' ORDER BY a.appt_date DESC, a.appt_time DESC LIMIT ? OFFSET ?';
+
+        $result = $this->execute($sql, $types, $params);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function countFiltered(string $scope, int $scopeId, array $filters = []): int
+    {
+        $conditions = [];
+        $params = [];
+        $types = '';
+
+        if ($scope === 'patient') {
+            $conditions[] = 'a.patient_id = ?';
+            $params[] = $scopeId;
+            $types .= 'i';
+        }
+
+        if ($scope === 'doctor') {
+            $conditions[] = 'a.doctor_id = ?';
+            $params[] = $scopeId;
+            $types .= 'i';
+        }
+
+        $this->applyCommonFilters($conditions, $params, $types, $filters);
+
+        $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+        $sql = 'SELECT COUNT(*) AS total FROM appointments a' . $where;
         $result = $this->execute($sql, $types, $params);
         $row = $result ? $result->fetch_assoc() : ['total' => 0];
 
         return (int)$row['total'];
+    }
+
+    public function todayByDoctor(int $doctorId): array
+    {
+        $sql = $this->selectJoin . ' WHERE a.doctor_id = ? AND a.appt_date = CURDATE()
+                ORDER BY a.appt_time ASC';
+        $result = $this->execute($sql, 'i', [$doctorId]);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function updateStatus(int $id, string $status, string $notes = ''): bool
+    {
+        return (bool)$this->execute(
+            'UPDATE appointments SET status = ?, doctor_notes = ? WHERE id = ?',
+            'ssi',
+            [$status, $notes, $id]
+        );
+    }
+
+    public function updateNotes(int $id, string $notes): bool
+    {
+        return (bool)$this->execute(
+            'UPDATE appointments SET doctor_notes = ? WHERE id = ?',
+            'si',
+            [$notes, $id]
+        );
     }
 
     public function cancelPendingByPatient(int $appointmentId, int $patientId): bool

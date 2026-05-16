@@ -268,3 +268,23 @@ Suggested commit:
 git add .
 git commit -m "feat: add patient appointment booking and history"
 ```
+
+## Step 12 - Doctor appointment schedule and status updates
+
+This step adds the doctor-side appointment workflow:
+
+- Doctors can open **My Schedule** from the sidebar.
+- Today's appointments appear at the top of the schedule page.
+- Doctors can filter appointments by status and date range.
+- Doctors can view appointment details.
+- Doctors can confirm pending appointments.
+- Doctors can complete confirmed appointments.
+- Doctors can cancel pending or confirmed appointments.
+- Doctors can add and update notes for their own appointments.
+- Server-side ownership checks prevent doctors from accessing appointments that do not belong to them.
+
+Commit message:
+
+```bash
+git commit -m "feat: add doctor appointment schedule and status updates"
+```

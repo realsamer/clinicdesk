@@ -7,12 +7,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>My Appointments</h1>
+                    <h1><?= e($pageTitle) ?></h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="<?= url('page=dashboard') ?>">Dashboard</a></li>
-                        <li class="breadcrumb-item active">My Appointments</li>
+                        <li class="breadcrumb-item active"><?= e($pageTitle) ?></li>
                     </ol>
                 </div>
             </div>
@@ -23,14 +23,58 @@
         <div class="container-fluid">
             <?php require __DIR__ . '/../partials/alerts.php'; ?>
 
+            <?php if (Auth::role() === 'doctor'): ?>
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">Today's Appointments</h3>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                    <th style="width: 100px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($todayList)): ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">No appointments scheduled for today.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($todayList as $appointment): ?>
+                                        <tr>
+                                            <td><?= e(formatTime($appointment['appt_time'])) ?></td>
+                                            <td><?= e($appointment['patient_name']) ?></td>
+                                            <td><?= statusBadge($appointment['status']) ?></td>
+                                            <td><?= e($appointment['reason'] ?: '-') ?></td>
+                                            <td>
+                                                <a href="<?= url('page=appointments&action=detail&id=' . (int)$appointment['id']) ?>" class="btn btn-xs btn-primary">
+                                                    Open
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Filter Appointments</h3>
-                    <div class="card-tools">
-                        <a href="<?= url('page=appointments&action=book') ?>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-calendar-plus mr-1"></i> Book Appointment
-                        </a>
-                    </div>
+                    <?php if (Auth::role() === 'patient'): ?>
+                        <div class="card-tools">
+                            <a href="<?= url('page=appointments&action=book') ?>" class="btn btn-sm btn-primary">
+                                <i class="fas fa-calendar-plus mr-1"></i> Book Appointment
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <form method="get" action="index.php">
                     <input type="hidden" name="page" value="appointments">
@@ -74,50 +118,98 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Appointment History</h3>
+                    <h3 class="card-title"><?= Auth::role() === 'doctor' ? 'Full Schedule' : 'Appointment History' ?></h3>
                 </div>
                 <div class="card-body table-responsive p-0">
                     <table class="table table-hover table-striped mb-0">
                         <thead>
                             <tr>
-                                <th>Doctor</th>
-                                <th>Specialization</th>
+                                <?php if (Auth::role() === 'doctor'): ?>
+                                    <th>Patient</th>
+                                <?php else: ?>
+                                    <th>Doctor</th>
+                                    <th>Specialization</th>
+                                <?php endif; ?>
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>Status</th>
                                 <th>Reason</th>
-                                <th style="width: 170px;">Action</th>
+                                <th style="width: 230px;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($appointments)): ?>
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-4">No appointments found.</td>
+                                    <td colspan="<?= Auth::role() === 'doctor' ? '6' : '7' ?>" class="text-center text-muted py-4">No appointments found.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($appointments as $appointment): ?>
                                     <tr>
-                                        <td><?= e($appointment['doctor_name']) ?></td>
-                                        <td><?= e($appointment['specialization_name']) ?></td>
+                                        <?php if (Auth::role() === 'doctor'): ?>
+                                            <td><?= e($appointment['patient_name']) ?></td>
+                                        <?php else: ?>
+                                            <td><?= e($appointment['doctor_name']) ?></td>
+                                            <td><?= e($appointment['specialization_name']) ?></td>
+                                        <?php endif; ?>
                                         <td><?= e(formatDate($appointment['appt_date'])) ?></td>
                                         <td><?= e(formatTime($appointment['appt_time'])) ?></td>
                                         <td><?= statusBadge($appointment['status']) ?></td>
                                         <td><?= e($appointment['reason'] ?: '-') ?></td>
                                         <td>
-                                            <?php if ($appointment['status'] === 'completed' && !empty($appointment['prescription_id'])): ?>
-                                                <a href="<?= url('page=prescriptions&action=download&id=' . (int)$appointment['id']) ?>" class="btn btn-xs btn-success mb-1">
-                                                    View Prescription
-                                                </a>
-                                            <?php endif; ?>
+                                            <a href="<?= url('page=appointments&action=detail&id=' . (int)$appointment['id']) ?>" class="btn btn-xs btn-primary mb-1">
+                                                View
+                                            </a>
 
-                                            <?php if ($appointment['status'] === 'pending'): ?>
-                                                <form method="post" action="<?= url('page=appointments&action=cancel') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
-                                                    <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
-                                                    <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
-                                                    <button type="submit" class="btn btn-xs btn-danger">Cancel</button>
-                                                </form>
-                                            <?php elseif ($appointment['status'] !== 'completed' || empty($appointment['prescription_id'])): ?>
-                                                <span class="text-muted small">No action</span>
+                                            <?php if (Auth::role() === 'doctor'): ?>
+                                                <?php if ($appointment['status'] === 'pending'): ?>
+                                                    <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
+                                                        <input type="hidden" name="status" value="confirmed">
+                                                        <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
+                                                        <button type="submit" class="btn btn-xs btn-info mb-1">Confirm</button>
+                                                    </form>
+                                                    <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
+                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
+                                                        <input type="hidden" name="status" value="cancelled">
+                                                        <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
+                                                        <button type="submit" class="btn btn-xs btn-danger mb-1">Cancel</button>
+                                                    </form>
+                                                <?php elseif ($appointment['status'] === 'confirmed'): ?>
+                                                    <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
+                                                        <input type="hidden" name="status" value="completed">
+                                                        <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
+                                                        <button type="submit" class="btn btn-xs btn-success mb-1">Complete</button>
+                                                    </form>
+                                                    <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
+                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
+                                                        <input type="hidden" name="status" value="cancelled">
+                                                        <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
+                                                        <button type="submit" class="btn btn-xs btn-danger mb-1">Cancel</button>
+                                                    </form>
+                                                <?php elseif ($appointment['status'] === 'completed' && empty($appointment['prescription_id'])): ?>
+                                                    <a href="<?= url('page=prescriptions&action=add&appointment_id=' . (int)$appointment['id']) ?>" class="btn btn-xs btn-success mb-1">
+                                                        Add Prescription
+                                                    </a>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <?php if ($appointment['status'] === 'completed' && !empty($appointment['prescription_id'])): ?>
+                                                    <a href="<?= url('page=prescriptions&action=download&id=' . (int)$appointment['id']) ?>" class="btn btn-xs btn-success mb-1">
+                                                        View Prescription
+                                                    </a>
+                                                <?php endif; ?>
+
+                                                <?php if ($appointment['status'] === 'pending'): ?>
+                                                    <form method="post" action="<?= url('page=appointments&action=cancel') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
+                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
+                                                        <button type="submit" class="btn btn-xs btn-danger">Cancel</button>
+                                                    </form>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

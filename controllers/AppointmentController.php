@@ -18,16 +18,27 @@ class AppointmentController
 
     public function index(): void
     {
-        Auth::requireRole('patient');
+        Auth::requireRole('doctor', 'patient');
 
         $page = max(1, (int)($_GET['p'] ?? 1));
         $filters = $this->readFilters();
+        $todayList = [];
 
-        $total = $this->appointments->countByPatient(Auth::id(), $filters);
-        $paginator = new Paginator($total, ITEMS_PER_PAGE, $page);
-        $appointments = $this->appointments->getByPatient(Auth::id(), $page, $filters);
+        if (Auth::role() === 'doctor') {
+            $doctor = $this->currentDoctorOr403();
+            $doctorId = (int)$doctor['id'];
+            $total = $this->appointments->countFiltered('doctor', $doctorId, $filters);
+            $paginator = new Paginator($total, ITEMS_PER_PAGE, $page);
+            $appointments = $this->appointments->getByDoctor($doctorId, $page, $filters);
+            $todayList = $this->appointments->todayByDoctor($doctorId);
+            $pageTitle = 'My Schedule';
+        } else {
+            $total = $this->appointments->countByPatient(Auth::id(), $filters);
+            $paginator = new Paginator($total, ITEMS_PER_PAGE, $page);
+            $appointments = $this->appointments->getByPatient(Auth::id(), $page, $filters);
+            $pageTitle = 'My Appointments';
+        }
 
-        $pageTitle = 'My Appointments';
         require __DIR__ . '/../views/appointments/list.php';
     }
 
@@ -108,6 +119,86 @@ class AppointmentController
         redirect(url('page=appointments'));
     }
 
+    public function detail(): void
+    {
+        Auth::requireRole('doctor', 'patient');
+
+        $appointment = $this->appointments->findById((int)($_GET['id'] ?? 0));
+
+        if (!$appointment) {
+            http_response_code(404);
+            require __DIR__ . '/../views/errors/404.php';
+            return;
+        }
+
+        $this->authorizeAppointment($appointment);
+
+        $pageTitle = 'Appointment Details';
+        require __DIR__ . '/../views/appointments/detail.php';
+    }
+
+    public function status(): void
+    {
+        Auth::requireRole('doctor');
+
+        if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
+            flash('danger', 'Invalid form token.');
+            redirect(url('page=appointments'));
+        }
+
+        $appointmentId = (int)($_POST['id'] ?? 0);
+        $newStatus = sanitize($_POST['status'] ?? '');
+        $doctorNotes = sanitize($_POST['doctor_notes'] ?? '');
+        $appointment = $this->appointments->findById($appointmentId);
+
+        if (!$appointment) {
+            http_response_code(404);
+            require __DIR__ . '/../views/errors/404.php';
+            return;
+        }
+
+        $this->authorizeDoctorAppointment($appointment);
+
+        if (!in_array($newStatus, ['confirmed', 'completed', 'cancelled'], true)) {
+            flash('danger', 'Invalid appointment status.');
+            redirect(url('page=appointments&action=detail&id=' . $appointmentId));
+        }
+
+        if (!$this->isAllowedDoctorTransition($appointment['status'], $newStatus)) {
+            flash('danger', 'This status change is not allowed.');
+            redirect(url('page=appointments&action=detail&id=' . $appointmentId));
+        }
+
+        $this->appointments->updateStatus($appointmentId, $newStatus, $doctorNotes);
+        flash('success', 'Appointment updated successfully.');
+        redirect(url('page=appointments&action=detail&id=' . $appointmentId));
+    }
+
+    public function notes(): void
+    {
+        Auth::requireRole('doctor');
+
+        if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
+            flash('danger', 'Invalid form token.');
+            redirect(url('page=appointments'));
+        }
+
+        $appointmentId = (int)($_POST['id'] ?? 0);
+        $doctorNotes = sanitize($_POST['doctor_notes'] ?? '');
+        $appointment = $this->appointments->findById($appointmentId);
+
+        if (!$appointment) {
+            http_response_code(404);
+            require __DIR__ . '/../views/errors/404.php';
+            return;
+        }
+
+        $this->authorizeDoctorAppointment($appointment);
+        $this->appointments->updateNotes($appointmentId, $doctorNotes);
+        flash('success', 'Doctor notes saved successfully.');
+        redirect(url('page=appointments&action=detail&id=' . $appointmentId));
+    }
+
     public function cancel(): void
     {
         Auth::requireRole('patient');
@@ -168,5 +259,52 @@ class AppointmentController
         $parsed = DateTime::createFromFormat('Y-m-d', $date);
 
         return $parsed && $parsed->format('Y-m-d') === $date;
+    }
+
+    private function currentDoctorOr403(): array
+    {
+        $doctor = $this->doctors->findByUserId(Auth::id());
+
+        if (!$doctor) {
+            redirect(url('page=error&action=403'));
+        }
+
+        return $doctor;
+    }
+
+    private function authorizeAppointment(array $appointment): void
+    {
+        if (Auth::role() === 'patient' && (int)$appointment['patient_id'] === Auth::id()) {
+            return;
+        }
+
+        if (Auth::role() === 'doctor') {
+            $this->authorizeDoctorAppointment($appointment);
+            return;
+        }
+
+        redirect(url('page=error&action=403'));
+    }
+
+    private function authorizeDoctorAppointment(array $appointment): void
+    {
+        $doctor = $this->currentDoctorOr403();
+
+        if ((int)$appointment['doctor_id'] !== (int)$doctor['id']) {
+            redirect(url('page=error&action=403'));
+        }
+    }
+
+    private function isAllowedDoctorTransition(string $currentStatus, string $newStatus): bool
+    {
+        if ($currentStatus === 'pending' && in_array($newStatus, ['confirmed', 'cancelled'], true)) {
+            return true;
+        }
+
+        if ($currentStatus === 'confirmed' && in_array($newStatus, ['completed', 'cancelled'], true)) {
+            return true;
+        }
+
+        return false;
     }
 }
