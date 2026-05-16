@@ -10,6 +10,7 @@ Auth::enforceFirstLogin($page, $action);
 
 $routes = [
     'auth' => 'AuthController',
+    'specializations' => 'SpecializationController',
     // Other controllers will be added in later steps.
 ];
 
@@ -73,8 +74,8 @@ if ($page === 'dashboard' || $page === 'home') {
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-danger">
                             <div class="inner">
-                                <h3>Auth</h3>
-                                <p>Step 6 Complete</p>
+                                <h3>CRUD</h3>
+                                <p>Step 7 Complete</p>
                             </div>
                             <div class="icon"><i class="fas fa-key"></i></div>
                         </div>
@@ -87,7 +88,7 @@ if ($page === 'dashboard' || $page === 'home') {
                     </div>
                     <div class="card-body">
                         <p class="mb-2">You are signed in as <strong><?= e(Auth::currentUser()['name'] ?? 'User') ?></strong>.</p>
-                        <p class="mb-0">The real role-based dashboards will be implemented in a later step.</p>
+                        <p class="mb-0">Specialization management is now available from the admin sidebar.</p>
                     </div>
                 </div>
             </div>

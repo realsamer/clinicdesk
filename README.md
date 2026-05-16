@@ -140,3 +140,28 @@ git add .
 git commit -m "feat: implement secure authentication flow"
 ```
 
+
+## Step 7: Specialization CRUD
+
+This step adds full admin specialization management:
+
+- List all specializations.
+- Add a new specialization.
+- Edit an existing specialization.
+- Update specialization name.
+- Delete specialization only when no doctor is using it.
+- Protect all write actions with CSRF validation.
+- Restrict access to admin users only.
+
+Route:
+
+```text
+index.php?page=specializations
+```
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: add specialization management crud"
+```
