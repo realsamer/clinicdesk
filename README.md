@@ -110,3 +110,33 @@ Expected result:
 git add .
 git commit -m "feat: add adminlte dashboard layout partials"
 ```
+
+## Step 6 - Authentication flow
+
+Implemented in this step:
+
+- Login page using AdminLTE login layout.
+- Login POST handling with CSRF validation.
+- `UserModel::findByEmail()` for authentication lookup.
+- `password_verify()` for password validation.
+- Active account check before login.
+- `session_regenerate_id(true)` through `Auth::login()`.
+- Logout as POST only with CSRF token.
+- Mandatory first-login password change support.
+- Temporary protected dashboard preview after login.
+
+Demo accounts after importing `database/clinicdesk_db.sql`:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | admin@clinic.local | Admin@1234 |
+| Doctor | doctor@clinic.local | Admin@1234 |
+| Patient | patient@clinic.local | Admin@1234 |
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: implement secure authentication flow"
+```
+

@@ -3,15 +3,19 @@ require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/core/helpers.php';
 require_once __DIR__ . '/core/Auth.php';
 
-$page = $_GET['page'] ?? 'home';
+$page = $_GET['page'] ?? 'dashboard';
 $action = $_GET['action'] ?? 'index';
 
+Auth::enforceFirstLogin($page, $action);
+
 $routes = [
-    // Controllers will be added in later steps.
-    // Example: 'auth' => 'AuthController',
+    'auth' => 'AuthController',
+    // Other controllers will be added in later steps.
 ];
 
-if ($page === 'home' || $page === 'dashboard') {
+if ($page === 'dashboard' || $page === 'home') {
+    Auth::requireLogin();
+
     $pageTitle = 'Dashboard Preview';
     require __DIR__ . '/views/partials/header.php';
     require __DIR__ . '/views/partials/navbar.php';
@@ -27,7 +31,7 @@ if ($page === 'home' || $page === 'dashboard') {
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="<?= url('page=dashboard') ?>">Home</a></li>
-                            <li class="breadcrumb-item active">Layout</li>
+                            <li class="breadcrumb-item active">Dashboard</li>
                         </ol>
                     </div>
                 </div>
@@ -42,26 +46,26 @@ if ($page === 'home' || $page === 'dashboard') {
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-info">
                             <div class="inner">
-                                <h3>3</h3>
-                                <p>User Roles</p>
+                                <h3><?= e(Auth::role()) ?></h3>
+                                <p>Current Role</p>
                             </div>
-                            <div class="icon"><i class="fas fa-users"></i></div>
+                            <div class="icon"><i class="fas fa-user-shield"></i></div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-success">
                             <div class="inner">
-                                <h3>5</h3>
-                                <p>Database Tables</p>
+                                <h3>Login</h3>
+                                <p>Session Protected</p>
                             </div>
-                            <div class="icon"><i class="fas fa-database"></i></div>
+                            <div class="icon"><i class="fas fa-lock"></i></div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-warning">
                             <div class="inner">
                                 <h3>CSRF</h3>
-                                <p>POST Protection</p>
+                                <p>Forms Protected</p>
                             </div>
                             <div class="icon"><i class="fas fa-shield-alt"></i></div>
                         </div>
@@ -69,21 +73,21 @@ if ($page === 'home' || $page === 'dashboard') {
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-danger">
                             <div class="inner">
-                                <h3>OOP</h3>
-                                <p>Models Ready</p>
+                                <h3>Auth</h3>
+                                <p>Step 6 Complete</p>
                             </div>
-                            <div class="icon"><i class="fas fa-code"></i></div>
+                            <div class="icon"><i class="fas fa-key"></i></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Step 5 Completed</h3>
+                        <h3 class="card-title">Authentication Connected</h3>
                     </div>
                     <div class="card-body">
-                        <p class="mb-2">The AdminLTE dashboard layout, local assets, and shared partial files were added successfully.</p>
-                        <p class="mb-0">Authentication, models, controllers, and real dashboard statistics will be connected in the next steps.</p>
+                        <p class="mb-2">You are signed in as <strong><?= e(Auth::currentUser()['name'] ?? 'User') ?></strong>.</p>
+                        <p class="mb-0">The real role-based dashboards will be implemented in a later step.</p>
                     </div>
                 </div>
             </div>
