@@ -6,7 +6,7 @@ This repository is being rebuilt step by step to keep a clean Git history with m
 
 ## Current step
 
-Step 2 adds the application bootstrap, shared configuration, helper functions, a simple front-controller routing shell, and basic 403/404 error pages.
+Step 3 adds the database schema, local database configuration files, a Singleton `Database` class, and a shared `BaseModel` class.
 
 ## Planned stack
 
@@ -29,20 +29,60 @@ Then open:
 http://localhost/clinicdesk/
 ```
 
-At this step, the project only confirms that the bootstrap and routing shell are working. Database, authentication, models, controllers, and dashboard pages will be added in later steps.
+## Database setup
 
-## Step 2 manual testing
+Open phpMyAdmin and import this file:
 
-Open these URLs:
+```text
+database/clinicdesk_db.sql
+```
+
+The SQL file creates a database named:
+
+```text
+clinicdesk_db
+```
+
+Default demo login records are seeded for later steps:
+
+```text
+Admin:   admin@clinic.local   / Admin@1234
+Doctor:  doctor@clinic.local  / Admin@1234
+Patient: patient@clinic.local / Admin@1234
+```
+
+If your MySQL username or password is different, update:
+
+```text
+config/database.php
+```
+
+For GitHub, keep real local credentials out of Git. Use `config/database.example.php` as the safe example file.
+
+## Step 3 manual testing
+
+1. Open phpMyAdmin.
+2. Import `database/clinicdesk_db.sql`.
+3. Confirm the database `clinicdesk_db` exists.
+4. Confirm these tables exist:
+
+```text
+users
+specializations
+doctors
+appointments
+prescriptions
+```
+
+5. Confirm the `users` table contains the seeded admin, doctor, and patient records.
+6. Open:
 
 ```text
 http://localhost/clinicdesk/
-http://localhost/clinicdesk/index.php?page=unknown
-http://localhost/clinicdesk/index.php?page=error&action=403
 ```
 
 Expected result:
 
-- The home URL shows the bootstrap success message.
-- Unknown pages show the 404 page.
-- The 403 test URL shows the 403 page.
+- The bootstrap page still loads.
+- No PHP error appears.
+- Database files are ready for the model/controller steps.
