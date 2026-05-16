@@ -18,13 +18,20 @@ class AppointmentController
 
     public function index(): void
     {
-        Auth::requireRole('doctor', 'patient');
+        Auth::requireRole('admin', 'doctor', 'patient');
 
         $page = max(1, (int)($_GET['p'] ?? 1));
         $filters = $this->readFilters();
         $todayList = [];
+        $doctors = [];
 
-        if (Auth::role() === 'doctor') {
+        if (Auth::role() === 'admin') {
+            $doctors = $this->doctors->getAll();
+            $total = $this->appointments->countFiltered('admin', 0, $filters);
+            $paginator = new Paginator($total, ITEMS_PER_PAGE, $page);
+            $appointments = $this->appointments->getAll($page, $filters);
+            $pageTitle = 'All Appointments';
+        } elseif (Auth::role() === 'doctor') {
             $doctor = $this->currentDoctorOr403();
             $doctorId = (int)$doctor['id'];
             $total = $this->appointments->countFiltered('doctor', $doctorId, $filters);
@@ -121,7 +128,7 @@ class AppointmentController
 
     public function detail(): void
     {
-        Auth::requireRole('doctor', 'patient');
+        Auth::requireRole('admin', 'doctor', 'patient');
 
         $appointment = $this->appointments->findById((int)($_GET['id'] ?? 0));
 
@@ -139,7 +146,7 @@ class AppointmentController
 
     public function status(): void
     {
-        Auth::requireRole('doctor');
+        Auth::requireRole('admin', 'doctor');
 
         if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
             flash('danger', 'Invalid form token.');
@@ -157,14 +164,16 @@ class AppointmentController
             return;
         }
 
-        $this->authorizeDoctorAppointment($appointment);
+        if (Auth::role() === 'doctor') {
+            $this->authorizeDoctorAppointment($appointment);
+        }
 
-        if (!in_array($newStatus, ['confirmed', 'completed', 'cancelled'], true)) {
+        if (!in_array($newStatus, ['pending', 'confirmed', 'completed', 'cancelled'], true)) {
             flash('danger', 'Invalid appointment status.');
             redirect(url('page=appointments&action=detail&id=' . $appointmentId));
         }
 
-        if (!$this->isAllowedDoctorTransition($appointment['status'], $newStatus)) {
+        if (Auth::role() === 'doctor' && !$this->isAllowedDoctorTransition($appointment['status'], $newStatus)) {
             flash('danger', 'This status change is not allowed.');
             redirect(url('page=appointments&action=detail&id=' . $appointmentId));
         }
@@ -230,6 +239,8 @@ class AppointmentController
         $status = sanitize($_GET['status'] ?? '');
         $startDate = sanitize($_GET['start_date'] ?? '');
         $endDate = sanitize($_GET['end_date'] ?? '');
+        $patientName = sanitize($_GET['patient_name'] ?? '');
+        $doctorId = (int)($_GET['doctor_id'] ?? 0);
 
         if (!in_array($status, ['pending', 'confirmed', 'completed', 'cancelled'], true)) {
             $status = '';
@@ -243,10 +254,16 @@ class AppointmentController
             $endDate = '';
         }
 
+        if ($doctorId < 1) {
+            $doctorId = 0;
+        }
+
         return [
             'status' => $status,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'doctor_id' => $doctorId,
+            'patient_name' => $patientName,
         ];
     }
 
@@ -274,6 +291,10 @@ class AppointmentController
 
     private function authorizeAppointment(array $appointment): void
     {
+        if (Auth::role() === 'admin') {
+            return;
+        }
+
         if (Auth::role() === 'patient' && (int)$appointment['patient_id'] === Auth::id()) {
             return;
         }

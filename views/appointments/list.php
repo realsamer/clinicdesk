@@ -1,3 +1,4 @@
+<?php $csrfToken = CSRF::generateToken(); ?>
 <?php require __DIR__ . '/../partials/header.php'; ?>
 <?php require __DIR__ . '/../partials/navbar.php'; ?>
 <?php require __DIR__ . '/../partials/sidebar.php'; ?>
@@ -80,7 +81,29 @@
                     <input type="hidden" name="page" value="appointments">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-3">
+                            <?php if (Auth::role() === 'admin'): ?>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="doctor_id">Doctor</label>
+                                        <select name="doctor_id" id="doctor_id" class="form-control">
+                                            <option value="">All Doctors</option>
+                                            <?php foreach (($doctors ?? []) as $doctor): ?>
+                                                <option value="<?= (int)$doctor['id'] ?>" <?= (int)($filters['doctor_id'] ?? 0) === (int)$doctor['id'] ? 'selected' : '' ?>>
+                                                    <?= e($doctor['doctor_name']) ?> - <?= e($doctor['specialization_name']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="patient_name">Patient Name</label>
+                                        <input type="text" name="patient_name" id="patient_name" class="form-control" value="<?= e($filters['patient_name'] ?? '') ?>" placeholder="Search patient">
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="col-md-<?= Auth::role() === 'admin' ? '2' : '3' ?>">
                                 <div class="form-group">
                                     <label for="status">Status</label>
                                     <select name="status" id="status" class="form-control">
@@ -93,22 +116,22 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-<?= Auth::role() === 'admin' ? '2' : '3' ?>">
                                 <div class="form-group">
                                     <label for="start_date">Start Date</label>
                                     <input type="date" name="start_date" id="start_date" class="form-control" value="<?= e($filters['start_date'] ?? '') ?>">
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-<?= Auth::role() === 'admin' ? '2' : '3' ?>">
                                 <div class="form-group">
                                     <label for="end_date">End Date</label>
                                     <input type="date" name="end_date" id="end_date" class="form-control" value="<?= e($filters['end_date'] ?? '') ?>">
                                 </div>
                             </div>
-                            <div class="col-md-3 d-flex align-items-end">
-                                <div class="form-group w-100">
-                                    <button type="submit" class="btn btn-primary btn-block">Apply Filter</button>
-                                    <a href="<?= url('page=appointments') ?>" class="btn btn-default btn-block">Clear</a>
+                            <div class="col-md-<?= Auth::role() === 'admin' ? '12' : '3' ?> d-flex align-items-end">
+                                <div class="form-group <?= Auth::role() === 'admin' ? '' : 'w-100' ?>">
+                                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                                    <a href="<?= url('page=appointments') ?>" class="btn btn-default">Clear</a>
                                 </div>
                             </div>
                         </div>
@@ -118,7 +141,15 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><?= Auth::role() === 'doctor' ? 'Full Schedule' : 'Appointment History' ?></h3>
+                    <h3 class="card-title">
+                        <?php if (Auth::role() === 'admin'): ?>
+                            All Appointments
+                        <?php elseif (Auth::role() === 'doctor'): ?>
+                            Full Schedule
+                        <?php else: ?>
+                            Appointment History
+                        <?php endif; ?>
+                    </h3>
                 </div>
                 <div class="card-body table-responsive p-0">
                     <table class="table table-hover table-striped mb-0">
@@ -126,6 +157,10 @@
                             <tr>
                                 <?php if (Auth::role() === 'doctor'): ?>
                                     <th>Patient</th>
+                                <?php elseif (Auth::role() === 'admin'): ?>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Specialization</th>
                                 <?php else: ?>
                                     <th>Doctor</th>
                                     <th>Specialization</th>
@@ -139,14 +174,26 @@
                         </thead>
                         <tbody>
                             <?php if (empty($appointments)): ?>
+                                <?php
+                                $emptyColspan = 7;
+                                if (Auth::role() === 'doctor') {
+                                    $emptyColspan = 6;
+                                } elseif (Auth::role() === 'admin') {
+                                    $emptyColspan = 8;
+                                }
+                                ?>
                                 <tr>
-                                    <td colspan="<?= Auth::role() === 'doctor' ? '6' : '7' ?>" class="text-center text-muted py-4">No appointments found.</td>
+                                    <td colspan="<?= $emptyColspan ?>" class="text-center text-muted py-4">No appointments found.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($appointments as $appointment): ?>
                                     <tr>
                                         <?php if (Auth::role() === 'doctor'): ?>
                                             <td><?= e($appointment['patient_name']) ?></td>
+                                        <?php elseif (Auth::role() === 'admin'): ?>
+                                            <td><?= e($appointment['patient_name']) ?></td>
+                                            <td><?= e($appointment['doctor_name']) ?></td>
+                                            <td><?= e($appointment['specialization_name']) ?></td>
                                         <?php else: ?>
                                             <td><?= e($appointment['doctor_name']) ?></td>
                                             <td><?= e($appointment['specialization_name']) ?></td>
@@ -163,14 +210,14 @@
                                             <?php if (Auth::role() === 'doctor'): ?>
                                                 <?php if ($appointment['status'] === 'pending'): ?>
                                                     <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline">
-                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
                                                         <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
                                                         <input type="hidden" name="status" value="confirmed">
                                                         <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
                                                         <button type="submit" class="btn btn-xs btn-info mb-1">Confirm</button>
                                                     </form>
                                                     <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
                                                         <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
                                                         <input type="hidden" name="status" value="cancelled">
                                                         <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
@@ -178,14 +225,14 @@
                                                     </form>
                                                 <?php elseif ($appointment['status'] === 'confirmed'): ?>
                                                     <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline">
-                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
                                                         <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
                                                         <input type="hidden" name="status" value="completed">
                                                         <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
                                                         <button type="submit" class="btn btn-xs btn-success mb-1">Complete</button>
                                                     </form>
                                                     <form method="post" action="<?= url('page=appointments&action=status') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
                                                         <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
                                                         <input type="hidden" name="status" value="cancelled">
                                                         <input type="hidden" name="doctor_notes" value="<?= e($appointment['doctor_notes'] ?? '') ?>">
@@ -196,7 +243,7 @@
                                                         Add Prescription
                                                     </a>
                                                 <?php endif; ?>
-                                            <?php else: ?>
+                                            <?php elseif (Auth::role() === 'patient'): ?>
                                                 <?php if ($appointment['status'] === 'completed' && !empty($appointment['prescription_id'])): ?>
                                                     <a href="<?= url('page=prescriptions&action=download&id=' . (int)$appointment['id']) ?>" class="btn btn-xs btn-success mb-1">
                                                         View Prescription
@@ -205,7 +252,7 @@
 
                                                 <?php if ($appointment['status'] === 'pending'): ?>
                                                     <form method="post" action="<?= url('page=appointments&action=cancel') ?>" class="d-inline" onsubmit="return confirm('Cancel this appointment?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= CSRF::generateToken() ?>">
+                                                        <input type="hidden" name="csrf_token" value="<?= e($csrfToken) ?>">
                                                         <input type="hidden" name="id" value="<?= (int)$appointment['id'] ?>">
                                                         <button type="submit" class="btn btn-xs btn-danger">Cancel</button>
                                                     </form>

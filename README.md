@@ -288,3 +288,28 @@ Commit message:
 ```bash
 git commit -m "feat: add doctor appointment schedule and status updates"
 ```
+
+## Step 13 - Admin appointment oversight and filters
+
+This step adds the admin-side appointment workflow:
+
+- Admin can open **All Appointments** from the sidebar.
+- Admin can view all appointments in the system.
+- Admin can filter appointments by doctor, patient name, status, start date, and end date.
+- Admin can open appointment details for any appointment.
+- Admin can update any appointment status.
+- Filtering is handled with a dynamic WHERE clause using prepared statements.
+- Pagination remains active for the admin appointment list.
+- Doctor and patient appointment ownership checks still remain enforced for non-admin users.
+
+Important pages:
+
+- `index.php?page=appointments`
+- `index.php?page=appointments&action=detail&id=1`
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: add admin appointment oversight and filters"
+```

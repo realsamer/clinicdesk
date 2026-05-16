@@ -96,6 +96,28 @@ class AppointmentModel extends BaseModel
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
+    public function getAll(int $page, array $filters = []): array
+    {
+        $offset = (max(1, $page) - 1) * ITEMS_PER_PAGE;
+        $conditions = [];
+        $params = [];
+        $types = '';
+
+        $this->applyCommonFilters($conditions, $params, $types, $filters);
+
+        $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+        $params[] = ITEMS_PER_PAGE;
+        $params[] = $offset;
+        $types .= 'ii';
+
+        $sql = $this->selectJoin . $where
+            . ' ORDER BY a.appt_date DESC, a.appt_time DESC LIMIT ? OFFSET ?';
+
+        $result = $this->execute($sql, $types, $params);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
     public function countFiltered(string $scope, int $scopeId, array $filters = []): int
     {
         $conditions = [];
@@ -117,7 +139,10 @@ class AppointmentModel extends BaseModel
         $this->applyCommonFilters($conditions, $params, $types, $filters);
 
         $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
-        $sql = 'SELECT COUNT(*) AS total FROM appointments a' . $where;
+        $sql = 'SELECT COUNT(*) AS total
+                FROM appointments a
+                INNER JOIN users p ON a.patient_id = p.id' . $where;
+
         $result = $this->execute($sql, $types, $params);
         $row = $result ? $result->fetch_assoc() : ['total' => 0];
 
@@ -177,6 +202,18 @@ class AppointmentModel extends BaseModel
         if (!empty($filters['end_date'])) {
             $conditions[] = 'a.appt_date <= ?';
             $params[] = $filters['end_date'];
+            $types .= 's';
+        }
+
+        if (!empty($filters['doctor_id'])) {
+            $conditions[] = 'a.doctor_id = ?';
+            $params[] = (int)$filters['doctor_id'];
+            $types .= 'i';
+        }
+
+        if (!empty($filters['patient_name'])) {
+            $conditions[] = 'p.name LIKE ?';
+            $params[] = '%' . $filters['patient_name'] . '%';
             $types .= 's';
         }
     }
