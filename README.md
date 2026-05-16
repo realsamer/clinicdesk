@@ -165,3 +165,24 @@ Suggested commit:
 git add .
 git commit -m "feat: add specialization management crud"
 ```
+
+## Step 8 - Doctor Management and Doctor Profile
+
+This step adds the doctor management module. Admin users can list and edit doctor records. Doctor users can edit their own professional profile, including specialization, bio, consultation fee, available days, and profile photo. Doctor photo uploads are validated with `getimagesize()` and limited to JPEG/PNG files up to 1 MB.
+
+Test this step with:
+
+- Admin: `admin@clinic.local` / `Admin@1234`
+- Doctor: `doctor@clinic.local` / `Admin@1234`
+
+Important pages:
+
+- `index.php?page=doctors`
+- `index.php?page=doctors&action=edit&id=1`
+- `index.php?page=doctors&action=profile`
+
+Commit message:
+
+```bash
+git commit -m "feat: add doctor management and profile editing"
+```
