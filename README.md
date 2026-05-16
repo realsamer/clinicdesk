@@ -313,3 +313,33 @@ Suggested commit:
 git add .
 git commit -m "feat: add admin appointment oversight and filters"
 ```
+
+## Step 14 - Prescriptions and secure PDF downloads
+
+This step adds the prescription workflow:
+
+- Doctors can add a prescription only for their own completed appointments.
+- Each appointment can have only one prescription.
+- Prescription form includes diagnosis, medications, optional notes, and optional scanned PDF.
+- Uploaded prescription files are validated with `finfo_file()` and must be real PDF files.
+- PDF files are limited to 3MB.
+- PDF files are stored in `public/uploads/prescriptions/`.
+- Direct access to the prescriptions upload folder is blocked with `.htaccess`.
+- Patients can open **My Prescriptions** from the sidebar.
+- Patients can only see prescriptions that belong to their own completed appointments.
+- Prescription PDF downloads are served through PHP after role and ownership checks.
+- Admin can download any prescription file.
+- Doctors can download prescription files only for their own appointments.
+
+Important pages:
+
+- `index.php?page=prescriptions`
+- `index.php?page=prescriptions&action=add&appointment_id=1`
+- `index.php?page=prescriptions&action=download&id=1`
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: add prescriptions and secure pdf downloads"
+```

@@ -14,6 +14,7 @@ $routes = [
     'doctors' => 'DoctorController',
     'users' => 'UserController',
     'appointments' => 'AppointmentController',
+    'prescriptions' => 'PrescriptionController',
     // Other controllers will be added in later steps.
 ];
 
@@ -78,7 +79,7 @@ if ($page === 'dashboard' || $page === 'home') {
                         <div class="small-box bg-danger">
                             <div class="inner">
                                 <h3>Admin</h3>
-                                <p>Step 13 Complete</p>
+                                <p>Step 14 Complete</p>
                             </div>
                             <div class="icon"><i class="fas fa-key"></i></div>
                         </div>
@@ -91,7 +92,7 @@ if ($page === 'dashboard' || $page === 'home') {
                     </div>
                     <div class="card-body">
                         <p class="mb-2">You are signed in as <strong><?= e(Auth::currentUser()['name'] ?? 'User') ?></strong>.</p>
-                        <p class="mb-0">Patient, doctor, and admin appointment management are now available from the sidebar.</p>
+                        <p class="mb-0">Prescription creation, patient prescription list, and secure PDF download are now available.</p>
                     </div>
                 </div>
             </div>
