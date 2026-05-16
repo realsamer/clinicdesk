@@ -185,6 +185,119 @@ class AppointmentModel extends BaseModel
         );
     }
 
+
+
+    public function countToday(): int
+    {
+        $result = $this->execute('SELECT COUNT(*) AS total FROM appointments WHERE appt_date = CURDATE()');
+        $row = $result ? $result->fetch_assoc() : ['total' => 0];
+
+        return (int)$row['total'];
+    }
+
+    public function countThisWeekByStatus(): array
+    {
+        $result = $this->execute(
+            'SELECT status, COUNT(*) AS total
+             FROM appointments
+             WHERE WEEK(appt_date) = WEEK(NOW()) AND YEAR(appt_date) = YEAR(NOW())
+             GROUP BY status'
+        );
+        $data = ['pending' => 0, 'confirmed' => 0, 'completed' => 0, 'cancelled' => 0];
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $data[$row['status']] = (int)$row['total'];
+            }
+        }
+
+        return $data;
+    }
+
+    public function recent(int $limit = 5): array
+    {
+        $sql = $this->selectJoin . ' ORDER BY a.created_at DESC LIMIT ?';
+        $result = $this->execute($sql, 'i', [$limit]);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function doctorMonthlyStats(int $doctorId): array
+    {
+        $result = $this->execute(
+            'SELECT status, COUNT(*) AS total
+             FROM appointments
+             WHERE doctor_id = ?
+               AND MONTH(appt_date) = MONTH(CURDATE())
+               AND YEAR(appt_date) = YEAR(CURDATE())
+             GROUP BY status',
+            'i',
+            [$doctorId]
+        );
+        $data = ['total' => 0, 'pending' => 0, 'confirmed' => 0, 'completed' => 0, 'cancelled' => 0];
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $count = (int)$row['total'];
+                $data[$row['status']] = $count;
+                $data['total'] += $count;
+            }
+        }
+
+        return $data;
+    }
+
+    public function upcomingByDoctor(int $doctorId, int $limit = 5): array
+    {
+        $sql = $this->selectJoin . '
+            WHERE a.doctor_id = ?
+              AND a.status IN (?, ?)
+              AND (a.appt_date > CURDATE() OR (a.appt_date = CURDATE() AND a.appt_time >= CURTIME()))
+            ORDER BY a.appt_date ASC, a.appt_time ASC
+            LIMIT ?';
+
+        $result = $this->execute($sql, 'issi', [$doctorId, 'pending', 'confirmed', $limit]);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function activeByPatient(int $patientId): array
+    {
+        $sql = $this->selectJoin . '
+            WHERE a.patient_id = ? AND a.status IN (?, ?)
+            ORDER BY a.appt_date ASC, a.appt_time ASC';
+
+        $result = $this->execute($sql, 'iss', [$patientId, 'pending', 'confirmed']);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function countCompletedByPatient(int $patientId): int
+    {
+        $result = $this->execute(
+            'SELECT COUNT(*) AS total FROM appointments WHERE patient_id = ? AND status = ?',
+            'is',
+            [$patientId, 'completed']
+        );
+        $row = $result ? $result->fetch_assoc() : ['total' => 0];
+
+        return (int)$row['total'];
+    }
+
+    public function nextUpcomingByPatient(int $patientId): ?array
+    {
+        $sql = $this->selectJoin . '
+            WHERE a.patient_id = ?
+              AND a.status IN (?, ?)
+              AND (a.appt_date > CURDATE() OR (a.appt_date = CURDATE() AND a.appt_time >= CURTIME()))
+            ORDER BY a.appt_date ASC, a.appt_time ASC
+            LIMIT 1';
+
+        $result = $this->execute($sql, 'iss', [$patientId, 'pending', 'confirmed']);
+
+        return $result && $result->num_rows ? $result->fetch_assoc() : null;
+    }
+
     private function applyCommonFilters(array &$conditions, array &$params, string &$types, array $filters): void
     {
         if (!empty($filters['status']) && in_array($filters['status'], $this->validStatuses(), true)) {

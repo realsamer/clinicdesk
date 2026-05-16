@@ -343,3 +343,30 @@ Suggested commit:
 git add .
 git commit -m "feat: add prescriptions and secure pdf downloads"
 ```
+
+## Step 15 - Role-Based Dashboard Statistics
+
+This step adds the real dashboard controller and role-based dashboard views.
+
+Implemented:
+
+- Admin dashboard statistics.
+- User counts grouped by role.
+- Today's appointments count.
+- This week's appointments grouped by status.
+- Recent 5 appointments table.
+- Doctor dashboard statistics.
+- Doctor's today's appointments.
+- Doctor's monthly appointment counts.
+- Doctor's next 5 upcoming appointments.
+- Patient dashboard statistics.
+- Patient active appointment list.
+- Patient completed appointments count.
+- Patient prescriptions count.
+- Patient next upcoming appointment card.
+
+Commit message:
+
+```bash
+git commit -m "feat: add role based dashboard statistics"
+```

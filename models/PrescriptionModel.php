@@ -70,4 +70,19 @@ class PrescriptionModel extends BaseModel
 
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
+
+
+    public function countByPatient(int $patientId): int
+    {
+        $sql = 'SELECT COUNT(*) AS total
+                FROM prescriptions pr
+                INNER JOIN appointments a ON pr.appointment_id = a.id
+                WHERE a.patient_id = ? AND a.status = ?';
+
+        $result = $this->execute($sql, 'is', [$patientId, 'completed']);
+        $row = $result ? $result->fetch_assoc() : ['total' => 0];
+
+        return (int)$row['total'];
+    }
+
 }
