@@ -13,6 +13,7 @@ $routes = [
     'specializations' => 'SpecializationController',
     'doctors' => 'DoctorController',
     'users' => 'UserController',
+    'appointments' => 'AppointmentController',
     // Other controllers will be added in later steps.
 ];
 
@@ -76,8 +77,8 @@ if ($page === 'dashboard' || $page === 'home') {
                     <div class="col-lg-3 col-6">
                         <div class="small-box bg-danger">
                             <div class="inner">
-                                <h3>Profile</h3>
-                                <p>Step 10 Complete</p>
+                                <h3>Booking</h3>
+                                <p>Step 11 Complete</p>
                             </div>
                             <div class="icon"><i class="fas fa-key"></i></div>
                         </div>
@@ -90,7 +91,7 @@ if ($page === 'dashboard' || $page === 'home') {
                     </div>
                     <div class="card-body">
                         <p class="mb-2">You are signed in as <strong><?= e(Auth::currentUser()['name'] ?? 'User') ?></strong>.</p>
-                        <p class="mb-0">Patient profile editing with avatar upload is now available from the sidebar.</p>
+                        <p class="mb-0">Patient appointment booking and appointment history are now available from the sidebar.</p>
                     </div>
                 </div>
             </div>

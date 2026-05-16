@@ -240,3 +240,31 @@ Suggested commit:
 git add .
 git commit -m "feat: add patient profile editing"
 ```
+
+## Step 11 - Patient Appointment Booking and History
+
+This step adds the patient appointment workflow:
+
+- Patient can book an appointment with an active doctor.
+- Doctor dropdown shows specialization and available days.
+- Appointment date cannot be in the past.
+- Appointment time must be one of the fixed 30-minute slots from 09:00 to 16:00.
+- Selected date must match the doctor's available days.
+- System checks for doctor/date/time conflicts before booking.
+- New appointments are created with `pending` status.
+- Patient can view their own appointment history only.
+- Patient can filter appointments by status and date range.
+- Patient can cancel only pending appointments.
+- All POST actions are protected with CSRF tokens.
+
+Important pages:
+
+- `index.php?page=appointments&action=book`
+- `index.php?page=appointments`
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: add patient appointment booking and history"
+```
