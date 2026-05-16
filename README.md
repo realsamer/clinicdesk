@@ -186,3 +186,32 @@ Commit message:
 ```bash
 git commit -m "feat: add doctor management and profile editing"
 ```
+
+## Step 9 - Admin User Management with Avatar Uploads
+
+This step adds admin user management:
+
+- Paginated users list.
+- Filter by role.
+- Search by name or email.
+- Create admin, doctor, and patient accounts.
+- Create a doctor record when the admin creates a doctor account.
+- Edit user name, phone, avatar, and active status.
+- Prevent the logged-in admin from deactivating their own account.
+- Change any user's password from the admin panel.
+- Validate user avatars with `getimagesize()`.
+- Allow only JPEG/PNG avatar images up to 1 MB.
+
+Important pages:
+
+- `index.php?page=users`
+- `index.php?page=users&action=create`
+- `index.php?page=users&action=edit&id=1`
+- `index.php?page=users&action=password&id=1`
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: add admin user management with avatar uploads"
+```
