@@ -6,7 +6,7 @@ This repository is being rebuilt step by step to keep a clean Git history with m
 
 ## Current step
 
-Step 3 adds the database schema, local database configuration files, a Singleton `Database` class, and a shared `BaseModel` class.
+Step 4 adds the shared security and utility classes: `Auth`, `CSRF`, and `Paginator`. These classes will be used by the authentication flow, protected pages, POST forms, and paginated lists in the next steps.
 
 ## Planned stack
 
@@ -59,30 +59,32 @@ config/database.php
 
 For GitHub, keep real local credentials out of Git. Use `config/database.example.php` as the safe example file.
 
-## Step 3 manual testing
+## Step 4 manual testing
 
-1. Open phpMyAdmin.
-2. Import `database/clinicdesk_db.sql`.
-3. Confirm the database `clinicdesk_db` exists.
-4. Confirm these tables exist:
-
-```text
-users
-specializations
-doctors
-appointments
-prescriptions
-```
-
-5. Confirm the `users` table contains the seeded admin, doctor, and patient records.
-6. Open:
+1. Open the project in the browser:
 
 ```text
 http://localhost/clinicdesk/
 ```
 
+2. Confirm the bootstrap page still loads.
+3. Open an unknown route:
+
+```text
+http://localhost/clinicdesk/index.php?page=unknown
+```
+
+4. Confirm the 404 page appears.
+5. Run PHP syntax checks if PHP is available in your terminal:
+
+```bash
+php -l core/Auth.php
+php -l core/CSRF.php
+php -l core/Paginator.php
+```
+
 Expected result:
 
-- The bootstrap page still loads.
-- No PHP error appears.
-- Database files are ready for the model/controller steps.
+- No syntax errors.
+- Existing routing still works.
+- The project is ready for the authentication step.
