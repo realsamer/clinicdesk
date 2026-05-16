@@ -6,7 +6,19 @@ This repository is being rebuilt step by step to keep a clean Git history with m
 
 ## Current step
 
-Step 4 adds the shared security and utility classes: `Auth`, `CSRF`, and `Paginator`. These classes will be used by the authentication flow, protected pages, POST forms, and paginated lists in the next steps.
+Step 5 adds the shared AdminLTE dashboard layout and local frontend assets.
+
+Added in this step:
+
+- AdminLTE 3 local asset files under `public/assets/adminlte/`
+- Shared layout partials:
+  - `views/partials/header.php`
+  - `views/partials/navbar.php`
+  - `views/partials/sidebar.php`
+  - `views/partials/footer.php`
+  - `views/partials/alerts.php`
+  - `views/partials/paginator.php`
+- A temporary dashboard preview in `index.php`
 
 ## Planned stack
 
@@ -59,7 +71,7 @@ config/database.php
 
 For GitHub, keep real local credentials out of Git. Use `config/database.example.php` as the safe example file.
 
-## Step 4 manual testing
+## Step 5 manual testing
 
 1. Open the project in the browser:
 
@@ -67,24 +79,34 @@ For GitHub, keep real local credentials out of Git. Use `config/database.example
 http://localhost/clinicdesk/
 ```
 
-2. Confirm the bootstrap page still loads.
-3. Open an unknown route:
+2. Confirm the AdminLTE dashboard preview appears.
+3. Confirm the dark sidebar and top navbar are visible.
+4. Confirm the small statistic boxes and card styling appear correctly.
+5. Open browser DevTools > Network and confirm these files load with status `200`:
+
+```text
+public/assets/adminlte/dist/css/adminlte.min.css
+public/assets/adminlte/dist/js/adminlte.min.js
+public/assets/adminlte/plugins/jquery/jquery.min.js
+public/assets/adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js
+public/assets/adminlte/plugins/fontawesome-free/css/all.min.css
+```
+
+6. Open an unknown route:
 
 ```text
 http://localhost/clinicdesk/index.php?page=unknown
 ```
 
-4. Confirm the 404 page appears.
-5. Run PHP syntax checks if PHP is available in your terminal:
-
-```bash
-php -l core/Auth.php
-php -l core/CSRF.php
-php -l core/Paginator.php
-```
-
 Expected result:
 
-- No syntax errors.
-- Existing routing still works.
-- The project is ready for the authentication step.
+- The AdminLTE preview layout loads correctly.
+- No red Console errors for missing CSS or JavaScript files.
+- Unknown routes still show the 404 page.
+
+## Step 5 commit
+
+```bash
+git add .
+git commit -m "feat: add adminlte dashboard layout partials"
+```
