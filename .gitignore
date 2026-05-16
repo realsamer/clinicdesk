@@ -1,0 +1,26 @@
+# Local database credentials
+/config/database.php
+
+# Runtime uploads
+/public/uploads/avatars/*
+!/public/uploads/avatars/.gitkeep
+!/public/uploads/avatars/index.php
+
+/public/uploads/doctor_photos/*
+!/public/uploads/doctor_photos/.gitkeep
+!/public/uploads/doctor_photos/index.php
+
+/public/uploads/prescriptions/*
+!/public/uploads/prescriptions/.gitkeep
+!/public/uploads/prescriptions/index.php
+!/public/uploads/prescriptions/.htaccess
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+*.tmp
