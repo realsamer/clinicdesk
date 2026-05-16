@@ -24,3 +24,8 @@ Thumbs.db
 # Logs and temporary files
 *.log
 *.tmp
+
+# Local archives and backups
+*.zip
+adminlte_old/
+clinicdesk_backup*/

@@ -298,6 +298,33 @@ class AppointmentModel extends BaseModel
         return $result && $result->num_rows ? $result->fetch_assoc() : null;
     }
 
+
+    public function getReport(array $filters): array
+    {
+        $conditions = ['a.appt_date BETWEEN ? AND ?'];
+        $params = [$filters['start_date'], $filters['end_date']];
+        $types = 'ss';
+
+        if (!empty($filters['doctor_id'])) {
+            $conditions[] = 'a.doctor_id = ?';
+            $params[] = (int)$filters['doctor_id'];
+            $types .= 'i';
+        }
+
+        if (!empty($filters['status']) && in_array($filters['status'], $this->validStatuses(), true)) {
+            $conditions[] = 'a.status = ?';
+            $params[] = $filters['status'];
+            $types .= 's';
+        }
+
+        $sql = $this->selectJoin . ' WHERE ' . implode(' AND ', $conditions)
+            . ' ORDER BY a.appt_date ASC, a.appt_time ASC';
+
+        $result = $this->execute($sql, $types, $params);
+
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
     private function applyCommonFilters(array &$conditions, array &$params, string &$types, array $filters): void
     {
         if (!empty($filters['status']) && in_array($filters['status'], $this->validStatuses(), true)) {

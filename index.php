@@ -17,7 +17,7 @@ $routes = [
     'users' => 'UserController',
     'appointments' => 'AppointmentController',
     'prescriptions' => 'PrescriptionController',
-    // Reports controller will be added in the final step.
+    'reports' => 'ReportController',
 ];
 
 if ($page === 'home') {
