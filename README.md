@@ -215,3 +215,28 @@ Suggested commit:
 git add .
 git commit -m "feat: add admin user management with avatar uploads"
 ```
+
+## Step 10 - Patient Profile Editing
+
+This step adds the patient self-profile page:
+
+- Patient can open `My Profile` from the sidebar.
+- Patient can update their own name.
+- Patient can update their own phone number.
+- Patient can upload/change their avatar.
+- Avatar upload accepts only valid JPEG/PNG images.
+- Avatar upload is limited to 1 MB.
+- Uploaded avatar files are stored in `public/uploads/avatars/`.
+- The session name is updated after saving the profile.
+
+Important pages:
+
+- `index.php?page=users&action=profile`
+- `index.php?page=users&action=update_profile`
+
+Suggested commit:
+
+```bash
+git add .
+git commit -m "feat: add patient profile editing"
+```

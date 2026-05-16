@@ -186,6 +186,61 @@ class UserController
         redirect(url('page=users'));
     }
 
+
+    public function profile(): void
+    {
+        Auth::requireRole('patient');
+
+        $user = $this->users->findById(Auth::id());
+        if (!$user) {
+            require __DIR__ . '/../views/errors/404.php';
+            return;
+        }
+
+        $pageTitle = 'My Profile';
+        require __DIR__ . '/../views/users/profile.php';
+    }
+
+    public function update_profile(): void
+    {
+        Auth::requireRole('patient');
+
+        if (!CSRF::validateToken($_POST['csrf_token'] ?? '')) {
+            flash('danger', 'Invalid form token.');
+            redirect(url('page=users&action=profile'));
+        }
+
+        $user = $this->users->findById(Auth::id());
+        if (!$user) {
+            require __DIR__ . '/../views/errors/404.php';
+            return;
+        }
+
+        $data = [
+            'name' => sanitize($_POST['name'] ?? ''),
+            'phone' => sanitize($_POST['phone'] ?? ''),
+        ];
+
+        if ($data['name'] === '') {
+            flash('danger', 'Name is required.');
+            redirect(url('page=users&action=profile'));
+        }
+
+        $avatar = $this->handleAvatarUpload('avatar', $user['avatar'] ?? null);
+        if ($this->uploadFailed) {
+            redirect(url('page=users&action=profile'));
+        }
+        if ($avatar !== null) {
+            $data['avatar'] = $avatar;
+        }
+
+        $this->users->update(Auth::id(), $data);
+        $_SESSION['user']['name'] = $data['name'];
+
+        flash('success', 'Profile updated successfully.');
+        redirect(url('page=users&action=profile'));
+    }
+
     public function toggle(): void
     {
         Auth::requireRole('admin');
