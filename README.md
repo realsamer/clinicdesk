@@ -37,6 +37,28 @@ The system is a private dashboard with one login page and three roles:
 - Role-based dashboard statistics.
 - Admin reports with CSV export.
 
+## Screenshots
+
+### Login Page
+
+![Login Page](docs/screenshots/login.png)
+
+### Admin Dashboard
+
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+
+### Doctor Schedule
+
+![Doctor Schedule](docs/screenshots/doctor-schedule.png)
+
+### Patient Book Appointment
+
+![Patient Book Appointment](docs/screenshots/patient-book-appointment.png)
+
+### Reports
+
+![Reports](docs/screenshots/reports.png)
+
 ## Project Structure
 
 ```text
