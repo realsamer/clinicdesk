@@ -9,6 +9,7 @@ require_once __DIR__ . '/../models/UserModel.php';
 class DoctorController
 {
     private DoctorModel $doctors;
+    private bool $photoUploadFailed = false;
 
     public function __construct()
     {
@@ -60,28 +61,45 @@ class DoctorController
             flash('danger', 'Invalid form token.');
             redirect(url('page=doctors'));
         }
+
         $doctorId = (int)($_POST['id'] ?? 0);
         $doctor = $this->doctors->findById($doctorId);
         if (!$doctor) {
             require __DIR__ . '/../views/errors/404.php';
             return;
         }
+
         if (Auth::role() === 'doctor' && (int)$doctor['user_id'] !== Auth::id()) {
             redirect(url('page=error&action=403'));
         }
 
+        $returnUrl = Auth::role() === 'doctor'
+            ? url('page=doctors&action=profile')
+            : url('page=doctors&action=edit&id=' . $doctorId);
+
         $days = $_POST['available_days'] ?? [];
         $validDays = array_values(array_intersect(dayOptions(), (array)$days));
-        if (!$validDays) $validDays = ['Sun'];
+        if (!$validDays) {
+            $validDays = ['Sun'];
+        }
 
-        $this->doctors->update($doctorId, [
+        $photo = $this->handleDoctorPhotoUpload('photo');
+        if ($this->photoUploadFailed) {
+            redirect($returnUrl);
+        }
+
+        $updated = $this->doctors->update($doctorId, [
             'specialization_id' => (int)($_POST['specialization_id'] ?? $doctor['specialization_id']),
             'bio' => sanitize($_POST['bio'] ?? ''),
             'consultation_fee' => (float)($_POST['consultation_fee'] ?? 0),
             'available_days' => implode(',', $validDays),
         ]);
 
-        $photo = $this->handleDoctorPhotoUpload('photo');
+        if (!$updated) {
+            flash('danger', 'Could not update doctor information.');
+            redirect($returnUrl);
+        }
+
         if ($photo !== null) {
             (new UserModel())->update((int)$doctor['user_id'], ['avatar' => $photo]);
         }
@@ -95,29 +113,44 @@ class DoctorController
 
     private function handleDoctorPhotoUpload(string $field): ?string
     {
+        $this->photoUploadFailed = false;
+
         if (empty($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
             return null;
         }
+
         if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+            $this->photoUploadFailed = true;
             flash('danger', uploadErrorMessage($_FILES[$field]['error']));
             return null;
         }
+
         if ($_FILES[$field]['size'] > MAX_IMAGE_SIZE) {
+            $this->photoUploadFailed = true;
             flash('danger', 'Doctor photo must not exceed 1MB.');
             return null;
         }
+
         $info = getimagesize($_FILES[$field]['tmp_name']);
         if (!$info || !in_array($info['mime'], ['image/jpeg', 'image/png'], true)) {
+            $this->photoUploadFailed = true;
             flash('danger', 'Doctor photo must be JPEG or PNG.');
             return null;
         }
+
         $extension = $info['mime'] === 'image/png' ? 'png' : 'jpg';
         $filename = 'doctor_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
-        if (!is_dir(UPLOAD_DOCTOR_PHOTO_PATH)) mkdir(UPLOAD_DOCTOR_PHOTO_PATH, 0775, true);
+
+        if (!is_dir(UPLOAD_DOCTOR_PHOTO_PATH)) {
+            mkdir(UPLOAD_DOCTOR_PHOTO_PATH, 0775, true);
+        }
+
         if (!move_uploaded_file($_FILES[$field]['tmp_name'], UPLOAD_DOCTOR_PHOTO_PATH . $filename)) {
+            $this->photoUploadFailed = true;
             flash('danger', 'Could not save doctor photo.');
             return null;
         }
+
         return 'public/uploads/doctor_photos/' . $filename;
     }
 }

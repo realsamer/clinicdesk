@@ -1,0 +1,11 @@
+# Normalize application source files.
+* text=auto
+
+*.php text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
+*.htaccess text eol=lf
+*.txt text eol=lf
+
+# Keep third-party AdminLTE assets untouched to avoid noisy line-ending changes.
+public/assets/adminlte/** -text

@@ -94,6 +94,18 @@ const DB_USER = 'root';
 const DB_PASS = '';
 ```
 
+If you cloned the project from GitHub, copy this safe template:
+
+```text
+config/database.example.php
+```
+
+Then rename the copy to:
+
+```text
+config/database.php
+```
+
 6. Open the project:
 
 ```text
@@ -166,11 +178,4 @@ Use this file as the safe template:
 
 ```text
 config/database.example.php
-```
-
-## Final Commit for Step 16
-
-```bash
-git add .
-git commit -m "feat: add reports csv export and final documentation"
 ```
