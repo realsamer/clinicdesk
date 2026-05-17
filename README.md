@@ -116,10 +116,10 @@ http://localhost/clinicdesk/
 
 After importing the SQL file, use these accounts:
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | admin@clinic.local | Admin@1234 |
-| Doctor | doctor@clinic.local | Admin@1234 |
+| Role    | Email                | Password   |
+| ------- | -------------------- | ---------- |
+| Admin   | admin@clinic.local   | Admin@1234 |
+| Doctor  | doctor@clinic.local  | Admin@1234 |
 | Patient | patient@clinic.local | Admin@1234 |
 
 If first-login enforcement is active for an account, the system will ask for a password change after login.
@@ -165,6 +165,10 @@ index.php?page=users&action=profile
 - Prescription PDF files are not linked directly. They are served through a controller after role and ownership checks.
 - Upload folders include `index.php` files to prevent browsing.
 - `public/uploads/prescriptions/.htaccess` blocks direct access to prescription files.
+
+## Continuous Integration
+
+This repository includes a GitHub Actions workflow to validate the SQL database import using a temporary MySQL database.
 
 ## GitHub Notes
 
